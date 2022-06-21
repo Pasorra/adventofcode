@@ -1,0 +1,1 @@
+#Was lazy to optimize the first one, ran the thing for 2 minutes and got the answer #ShameOnMe
