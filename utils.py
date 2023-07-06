@@ -1,3 +1,5 @@
+
+######################################################################################################################
 class Node:
     def __init__(self, x, y, elevation) -> None:
         self.x = x
@@ -56,3 +58,9 @@ def a_star(start: Node, end: Node, nodes:list[list[Node]]):
                     open_nodes.append(neighbor)
     
     raise Exception("Could not find")
+######################################################################################################################
+def bubble_sort(lst):
+    for i in range(len(lst) - 1):
+        for j in range(len(lst) - 1 - i):
+            if lst[j] > lst[j + 1]:
+                lst[j], lst[j + 1] = lst[j + 1], lst[j]
