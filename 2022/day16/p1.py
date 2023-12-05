@@ -1,67 +1,72 @@
+# not only is this extremely slow but also just straight up doesn't work... amazing.......................
+import time
+
+start = time.time()
 with open(r"2022\day16\input.txt", "r") as file:
     lines = [line.strip() for line in file]
 
+
 class Valve:
-    def __init__(self, name: str, flow: int, valves: list) -> None:
+    def __init__(self, name: str, flow: int) -> None:
         self.name = name
         self.flow = flow
-        self.valves = valves
+        self.valves = []
         self.open = False
-        self.visited = False
+        self.cost_to_move = 0
 
-def find_shortest_path(valve, to, valves, x = 0):
-    returned = float("inf")
-    for i, sub_valve in enumerate(valve.valves):
-        if type(sub_valve) is str:
-            sub_valve = find_valve(sub_valve, valves)
-            valve.valves[i] = sub_valve
-        
-        if sub_valve == to:
-            returned = min(x + 1, returned)
-        elif not sub_valve.visited:
-            sub_valve.visited = True
-            returned = min(find_shortest_path(sub_valve, to, valves, x + 1), returned)
-            sub_valve.visited = False
-    return returned 
-     
-current:Valve
-valves = []
+
+def find_valve_by_name(valves: list[Valve], name: str):
+    return next(x for x in valves if x.name == name)
+
+
+def bfs(source: Valve, destination: Valve, valves: list[Valve]):
+    q = [source]
+    for valve in valves:
+        valve.cost_to_move = 0
+    visited = []
+    while q:
+        valve = q.pop(0)
+        visited.append(valve)
+        if valve == destination:
+            return valve.cost_to_move
+        for new_valve in valve.valves:
+            if new_valve not in visited:
+                q.append(new_valve)
+                new_valve.cost_to_move = valve.cost_to_move + 1
+    return 0
+
+
+valves: list[Valve] = []
+startingValve: Valve
 for line in lines:
-    line = line.split()
-    name = line[1]
-    flow = int(line[4].split("=")[1][:-1])
-    sub_valves = "".join(line[9:]).split(",")
-    valve = Valve(name, flow, sub_valves)
+    semicolonIndex = line.find(";")
+    valve = Valve(line[6:8], int(line[23:semicolonIndex]))
     valves.append(valve)
-    if name == "AA":
-        current = valve
-    
-def find_valve(target_name, valves):
-    for valve in valves:
-        if valve.name == target_name: return valve
-    raise Exception
+    if valve.name == "AA":
+        startingValve = valve
 
-minute = 30
-releasing = 0
-valves.sort(key= lambda v: v.flow, reverse= True)
-while True:
-    possible_releases = []
+for line in lines:
+    currentValve: Valve = find_valve_by_name(valves, line[6:8])
+    valveNames = line.split(", ")
+    valveNames[0] = valveNames[0][-2:]
+    for valveName in valveNames:
+        valve: Valve = find_valve_by_name(valves, valveName)
+        currentValve.valves.append(valve)
+
+
+def brute(start, i, value):
+    values = [value]
     for valve in valves:
-        if valve.flow == 0: break
-        if valve.open == True: continue
-        shortest = find_shortest_path(current, valve, valves) + 1 
-        print(shortest)
-        x = (30 - shortest) * valve.flow
-        possible_releases.append([x, valve, shortest])
-    if not possible_releases:
-        break
-    possible_releases.sort(key = lambda v: v[0], reverse=True)
-    for arr in possible_releases:
-        if arr[2] > minute: continue
-        result += arr[0]
-        minute -= arr[2]
-        current = arr[1]
-        current.open = True
-        break
-        
-print(result)
+        if valve.flow == 0 or valve.open:
+            continue
+        cost = bfs(start, valve, valves) + 1
+        if cost >= i:
+            continue
+        valve.open = True
+        values.append(brute(valve, i - cost, value + ((i - cost) * valve.flow)))
+        valve.open = False
+    return max(values)
+
+
+print(brute(startingValve, 30, 0))
+print(time.time() - start)
